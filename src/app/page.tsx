@@ -53,7 +53,7 @@ export default function TournamentApp() {
   };
 
   const generateMatches = async () => {
-    for (const category of Object.keys(teams)) {
+    for (const category of Object.keys(teams) as (keyof typeof teams)[]) {
       const list = teams[category];
       for (let i = 0; i < list.length; i++) {
         for (let j = i + 1; j < list.length; j++) {
