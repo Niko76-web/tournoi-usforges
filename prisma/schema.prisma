@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model matchs {
+  id        Int     @id @default(autoincrement())
+  categorie String? @db.VarChar(10)
+  equipe1   String? @db.VarChar(50)
+  equipe2   String? @db.VarChar(50)
+  score1    Int?
+  score2    Int?
+}

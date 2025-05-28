@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const teams = {
@@ -11,7 +9,7 @@ const teams = {
   U13: ["U13 Forges", "U13 Aumale", "U13 Londinières", "U13 Gournay"],
 };
 
-export default function TournamentApp() {
+export default function PublicPage() {
   const [scores, setScores] = useState<{ [key: string]: any[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
@@ -31,60 +29,9 @@ export default function TournamentApp() {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 10000); // refresh every 10 sec
+    return () => clearInterval(interval);
   }, []);
-
-  const updateScore = async (category: string, index: number, team: "score1" | "score2", value: string) => {
-    const updated = [...scores[category]];
-    updated[index][team] = parseInt(value, 10);
-    setScores({ ...scores, [category]: updated });
-
-    const match = updated[index];
-    await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        categorie: category,
-        equipe1: match.equipe1,
-        equipe2: match.equipe2,
-        score1: match.score1,
-        score2: match.score2,
-      }),
-    });
-  };
-
-  const generateMatches = async () => {
-    for (const category of Object.keys(teams)) {
-      const list = teams[category];
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
-          await fetch("/api/scores", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              categorie: category,
-              equipe1: list[i],
-              equipe2: list[j],
-              score1: null,
-              score2: null,
-            }),
-          });
-        }
-      }
-    }
-    alert("Les matchs ont été générés avec succès !");
-    await fetchData();
-  };
-
-  const clearDatabase = async () => {
-    const confirmation = confirm("Voulez-vous vraiment supprimer tous les matchs ? Cette action est irréversible.");
-    if (!confirmation) return;
-
-    await fetch("/api/scores", {
-      method: "DELETE",
-    });
-    alert("La base de données a été vidée.");
-    await fetchData();
-  };
 
   const calculateRanking = (matches: any[], category: string) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
@@ -120,15 +67,11 @@ export default function TournamentApp() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Tournoi de Handball - U11 & U13</h1>
-      <div className="flex gap-4 mb-4">
-        <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
-        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>🗑️ Vider la base de données</Button>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">🏆 Résultats Tournoi de Handball</h1>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
-          <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
-          <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
+          <TabsTrigger value="U11">U11</TabsTrigger>
+          <TabsTrigger value="U13">U13</TabsTrigger>
         </TabsList>
         {Object.keys(teams).map((category) => (
           <TabsContent key={category} value={category}>
@@ -160,19 +103,9 @@ export default function TournamentApp() {
                 <Card key={index}>
                   <CardContent className="flex items-center justify-between p-4 gap-4">
                     <span>{match.equipe1}</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score1 || ""}
-                      onChange={(e) => updateScore(category, index, "score1", e.target.value)}
-                    />
+                    <span className="text-lg font-semibold">{match.score1 ?? "-"}</span>
                     <span>vs</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score2 || ""}
-                      onChange={(e) => updateScore(category, index, "score2", e.target.value)}
-                    />
+                    <span className="text-lg font-semibold">{match.score2 ?? "-"}</span>
                     <span>{match.equipe2}</span>
                   </CardContent>
                 </Card>
