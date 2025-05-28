@@ -10,16 +10,16 @@ const teams = {
 };
 
 export default function PublicPage() {
-  const [scores, setScores] = useState<{ [key: string]: any[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in keyof typeof teams]: any[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
       const data = await res.json();
-      const scoresByCat: { [key: string]: any[] } = { U11: [], U13: [] };
+      const scoresByCat: { [key in keyof typeof teams]: any[] } = { U11: [], U13: [] };
       data.forEach((match: any) => {
-        scoresByCat[match.categorie].push(match);
+        scoresByCat[match.categorie as keyof typeof teams].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -33,7 +33,7 @@ export default function PublicPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const calculateRanking = (matches: any[], category: string) => {
+  const calculateRanking = (matches: any[], category: keyof typeof teams) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
@@ -73,7 +73,7 @@ export default function PublicPage() {
           <TabsTrigger value="U11">U11</TabsTrigger>
           <TabsTrigger value="U13">U13</TabsTrigger>
         </TabsList>
-        {Object.keys(teams).map((category) => (
+        {(Object.keys(teams) as (keyof typeof teams)[]).map((category) => (
           <TabsContent key={category} value={category}>
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Classement</h2>

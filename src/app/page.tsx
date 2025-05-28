@@ -12,16 +12,16 @@ const teams = {
 };
 
 export default function TournamentApp() {
-  const [scores, setScores] = useState<{ [key: string]: any[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in keyof typeof teams]: any[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
       const data = await res.json();
-      const scoresByCat: { [key: string]: any[] } = { U11: [], U13: [] };
+      const scoresByCat: { [key in keyof typeof teams]: any[] } = { U11: [], U13: [] };
       data.forEach((match: any) => {
-        scoresByCat[match.categorie].push(match);
+        scoresByCat[match.categorie as keyof typeof teams].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -33,7 +33,7 @@ export default function TournamentApp() {
     fetchData();
   }, []);
 
-  const updateScore = async (category: string, index: number, team: "score1" | "score2", value: string) => {
+  const updateScore = async (category: keyof typeof teams, index: number, team: "score1" | "score2", value: string) => {
     const updated = [...scores[category]];
     updated[index][team] = parseInt(value, 10);
     setScores({ ...scores, [category]: updated });
@@ -86,7 +86,7 @@ export default function TournamentApp() {
     await fetchData();
   };
 
-  const calculateRanking = (matches: any[], category: string) => {
+  const calculateRanking = (matches: any[], category: keyof typeof teams) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
@@ -130,7 +130,7 @@ export default function TournamentApp() {
           <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
           <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
         </TabsList>
-        {Object.keys(teams).map((category) => (
+        {(Object.keys(teams) as (keyof typeof teams)[]).map((category) => (
           <TabsContent key={category} value={category}>
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Classement</h2>
