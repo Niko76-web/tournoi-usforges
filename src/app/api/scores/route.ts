@@ -24,21 +24,24 @@ export async function POST(req: Request) {
   try {
     const match = await prisma.matchs.upsert({
       where: {
-        // Identification unique par couple d'équipes + catégorie
-        id: await getMatchId(categorie, equipe1, equipe2),
-      },
-      update: {
-        score1,
-        score2,
-      },
-      create: {
-        categorie,
-        equipe1,
-        equipe2,
-        score1,
-        score2,
-      },
-    });
+    categorie_equipe1_equipe2: {
+      categorie,
+      equipe1,
+      equipe2,
+    },
+  },
+  update: {
+    score1,
+    score2,
+  },
+  create: {
+    categorie,
+    equipe1,
+    equipe2,
+    score1,
+    score2,
+  },
+});
 
     return NextResponse.json(match);
   } catch (error) {
@@ -48,16 +51,16 @@ export async function POST(req: Request) {
 }
 
 // Fonction utilitaire pour récupérer l'ID d'un match si existant
-async function getMatchId(categorie: string, equipe1: string, equipe2: string) {
-  const match = await prisma.matchs.findFirst({
-    where: {
-      categorie,
-      equipe1,
-      equipe2,
-    },
-  });
-  return match?.id || 0;
-}
+//async function getMatchId(categorie: string, equipe1: string, equipe2: string) {
+//  const match = await prisma.matchs.findFirst({
+//    where: {
+//      categorie,
+//      equipe1,
+//      equipe2,
+//    },
+//  });
+//  return match?.id || 0;
+//}
 
 // Fonction d'effacement de la base de données
 export async function DELETE() {
