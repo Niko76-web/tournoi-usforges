@@ -1,0 +1,12 @@
+# Ne pas analyser les modules installés
+node_modules/
+
+# Dossier de build
+.next/
+
+# Fichiers générés automatiquement
+src/generated/
+
+# Fichiers de configuration ou caches
+.env
+*.log
