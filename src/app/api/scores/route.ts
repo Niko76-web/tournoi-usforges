@@ -1,76 +1,60 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Récupérer tous les matchs (GET)
+// GET – Liste tous les matchs
 export async function GET() {
   try {
-    console.log("API GET /api/scores appelée")
-
     const matchs = await prisma.matchs.findMany();
-    console.log("Résultat depuis la BDD :", matchs);
-
     return NextResponse.json(matchs);
   } catch (error) {
-    console.error("Erreur lors du GET /api/scores :", error);
-    return NextResponse.json({ error: "Erreur de lecture des scores." }, { status: 500 });
+    console.error("🔥 ERREUR GET /api/scores", error);
+    return NextResponse.json({ error: "Erreur de lecture des scores" }, { status: 500 });
   }
 }
 
-// Ajouter ou mettre à jour un score (POST)
+// POST – Ajoute ou met à jour un match
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { categorie, equipe1, equipe2, score1, score2 } = body;
-
   try {
+    const body = await req.json();
+    const { categorie, equipe1, equipe2, score1, score2 } = body;
+
     const match = await prisma.matchs.upsert({
       where: {
-    categorie_equipe1_equipe2: {
-      categorie,
-      equipe1,
-      equipe2,
-    },
-  },
-  update: {
-    score1,
-    score2,
-  },
-  create: {
-    categorie,
-    equipe1,
-    equipe2,
-    score1,
-    score2,
-  },
-});
+        // nommage automatique généré par Prisma pour une clé composite :
+        categorie_equipe1_equipe2: {
+          categorie,
+          equipe1,
+          equipe2,
+        },
+      },
+      update: {
+        score1,
+        score2,
+      },
+      create: {
+        categorie,
+        equipe1,
+        equipe2,
+        score1,
+        score2,
+      },
+    });
 
+    console.log("✅ MATCH UPSERTÉ :", match);
     return NextResponse.json(match);
   } catch (error) {
-    console.error(error);
+    console.error("🔥 ERREUR POST /api/scores", error);
     return NextResponse.json({ error: "Erreur d'enregistrement du score." }, { status: 500 });
   }
 }
 
-// Fonction utilitaire pour récupérer l'ID d'un match si existant
-//async function getMatchId(categorie: string, equipe1: string, equipe2: string) {
-//  const match = await prisma.matchs.findFirst({
-//    where: {
-//      categorie,
-//      equipe1,
-//      equipe2,
-//    },
-//  });
-//  return match?.id || 0;
-//}
-
-// Fonction d'effacement de la base de données
+// DELETE – Supprime tous les matchs
 export async function DELETE() {
   try {
     await prisma.matchs.deleteMany({});
     return NextResponse.json({ message: "Tous les matchs ont été supprimés." });
   } catch (error) {
-    console.error("Erreur lors du DELETE /api/scores :", error);
+    console.error("🔥 ERREUR DELETE /api/scores", error);
     return NextResponse.json({ error: "Erreur de suppression." }, { status: 500 });
   }
 }
-
-
