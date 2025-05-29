@@ -11,17 +11,19 @@ const teams = {
   U13: ["U13 Forges", "U13 Aumale", "U13 Londinières", "U13 Gournay"],
 };
 
+type Category = keyof typeof teams;
+
 export default function TournamentApp() {
-  const [scores, setScores] = useState<{ [key in keyof typeof teams]: any[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in Category]: any[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
       const data = await res.json();
-      const scoresByCat: { [key in keyof typeof teams]: any[] } = { U11: [], U13: [] };
+      const scoresByCat: { [key in Category]: any[] } = { U11: [], U13: [] };
       data.forEach((match: any) => {
-        scoresByCat[match.categorie as keyof typeof teams].push(match);
+        scoresByCat[match.categorie as Category].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -33,7 +35,7 @@ export default function TournamentApp() {
     fetchData();
   }, []);
 
-  const updateScore = async (category: keyof typeof teams, index: number, team: "score1" | "score2", value: string) => {
+  const updateScore = async (category: Category, index: number, team: "score1" | "score2", value: string) => {
     const updated = [...scores[category]];
     updated[index][team] = parseInt(value, 10);
     setScores({ ...scores, [category]: updated });
@@ -53,7 +55,7 @@ export default function TournamentApp() {
   };
 
   const generateMatches = async () => {
-    for (const category of Object.keys(teams) as (keyof typeof teams)[]) {
+    for (const category of Object.keys(teams) as Category[]) {
       const list = teams[category];
       for (let i = 0; i < list.length; i++) {
         for (let j = i + 1; j < list.length; j++) {
@@ -86,7 +88,7 @@ export default function TournamentApp() {
     await fetchData();
   };
 
-  const calculateRanking = (matches: any[], category: keyof typeof teams) => {
+  const calculateRanking = (matches: any[], category: Category) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
@@ -130,7 +132,7 @@ export default function TournamentApp() {
           <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
           <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
         </TabsList>
-        {(Object.keys(teams) as (keyof typeof teams)[]).map((category) => (
+        {(Object.keys(teams) as Category[]).map((category) => (
           <TabsContent key={category} value={category}>
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Classement</h2>
@@ -163,14 +165,14 @@ export default function TournamentApp() {
                     <Input
                       type="number"
                       className="w-16"
-                      value={match.score1 || ""}
+                      value={match.score1 ?? ""}
                       onChange={(e) => updateScore(category, index, "score1", e.target.value)}
                     />
                     <span>vs</span>
                     <Input
                       type="number"
                       className="w-16"
-                      value={match.score2 || ""}
+                      value={match.score2 ?? ""}
                       onChange={(e) => updateScore(category, index, "score2", e.target.value)}
                     />
                     <span>{match.equipe2}</span>
