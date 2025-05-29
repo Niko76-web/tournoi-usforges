@@ -17,4 +17,5 @@ model Matchs {
   score2    Int?
 
   @@unique([categorie, equipe1, equipe2])
+  @@map("matchs") // <-- force Prisma à utiliser une table `matchs` en minuscules
 }
