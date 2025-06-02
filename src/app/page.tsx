@@ -184,87 +184,80 @@ export default function TournamentApp() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Tournoi de Handball - U11 & U13</h1>
-      <div className="flex gap-4 mb-4">
-        <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
-        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>🗑️ Vider la base de données</Button>
-      </div>
-      <div className="flex justify-end mb-2">
-        <Button className="bg-gray-400 hover:bg-gray-500" onClick={handleLogout}>
-        🔒 Déconnexion
-        </Button>
-      </div>
-      <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
-        <h1 className="text-2xl font-bold mb-4">Tournoi de Handball - U11 & U13</h1>
-        <Tabs defaultValue="U11" className="w-full">
-          <TabsList>
-            <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>
-            <TabsTrigger value="U13" onClick={() => setActiveTab("U13")}>Catégorie U13</TabsTrigger>
-          </TabsList>
-          {/* reste du contenu ici */}
-        </Tabs>
-      </div>
+  <div className={`min-h-screen p-4 transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
+    <h1 className="text-2xl font-bold mb-4">Tournoi de Handball - U11 & U13</h1>
 
-      <Tabs defaultValue="U11" className="w-full">
-        <TabsList>
-          <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
-          <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
-        </TabsList>
-        {(Object.keys(teams) as Category[]).map((category) => (
-          <TabsContent key={category} value={category}>
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold mb-2">Classement</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left">Équipe</th>
-                    <th>Pts</th>
-                    <th>J</th>
-                    <th>Diff</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calculateRanking(scores[category], category).map(([team, stats]) => (
-                    <tr key={team} className="border-t">
-                      <td>{team}</td>
-                      <td className="text-center">{stats.pts}</td>
-                      <td className="text-center">{stats.played}</td>
-                      <td className="text-center">{stats.goalsDiff}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="grid gap-4">
-              {scores[category].map((match, index) => (
-                <Card key={index}>
-                  <CardContent className="flex items-center justify-between p-4 gap-4">
-                    <p className="text-sm text-gray-500">
-                      🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
-                    </p>
-                    <span>{match.equipe1}</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score1 ?? ""}
-                      onChange={(e) => updateScore(category, index, "score1", e.target.value)}
-                    />
-                    <span>vs</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score2 ?? ""}
-                      onChange={(e) => updateScore(category, index, "score2", e.target.value)}
-                    />
-                    <span>{match.equipe2}</span>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+    <div className="flex gap-4 mb-4">
+      <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
+      <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>🗑️ Vider la base de données</Button>
     </div>
-  );
+
+    <div className="flex justify-end mb-4">
+      <Button className="bg-gray-400 hover:bg-gray-500" onClick={handleLogout}>🔒 Déconnexion</Button>
+    </div>
+
+    <Tabs defaultValue="U11" className="w-full" onValueChange={(val) => setActiveTab(val as Category)}>
+      <TabsList>
+        <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
+        <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
+      </TabsList>
+
+      {(Object.keys(teams) as Category[]).map((category) => (
+        <TabsContent key={category} value={category}>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold mb-2">Classement</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="text-left">Équipe</th>
+                  <th>Pts</th>
+                  <th>J</th>
+                  <th>Diff</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calculateRanking(scores[category], category).map(([team, stats]) => (
+                  <tr key={team} className="border-t">
+                    <td>{team}</td>
+                    <td className="text-center">{stats.pts}</td>
+                    <td className="text-center">{stats.played}</td>
+                    <td className="text-center">{stats.goalsDiff}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="grid gap-4">
+            {scores[category].map((match, index) => (
+              <Card key={index}>
+                <CardContent className="flex items-center justify-between p-4 gap-4">
+                  <p className="text-sm text-gray-500">
+                    🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
+                  </p>
+                  <span>{match.equipe1}</span>
+                  <Input
+                    type="number"
+                    className="w-16"
+                    value={match.score1 ?? ""}
+                    onChange={(e) => updateScore(category, index, "score1", e.target.value)}
+                  />
+                  <span>vs</span>
+                  <Input
+                    type="number"
+                    className="w-16"
+                    value={match.score2 ?? ""}
+                    onChange={(e) => updateScore(category, index, "score2", e.target.value)}
+                  />
+                  <span>{match.equipe2}</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      ))}
+    </Tabs>
+  </div>
+);
 }
+
