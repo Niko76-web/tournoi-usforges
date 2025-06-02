@@ -70,7 +70,7 @@ export default function PublicPage() {
   };
 
   return (
-    <div className={`p-4 min-h-screen ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
       <h1 className="text-2xl font-bold mb-4">Résultats en direct</h1>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
