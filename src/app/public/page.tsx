@@ -5,23 +5,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const teams = {
-  U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Arques"],
+  U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Grandvilliers"],
   U13: ["U13 Forges", "U13 Aumale", "U13 Londinières", "U13 Gournay"],
 };
 
 type Category = keyof typeof teams;
 
+type Match = {
+  equipe1: string;
+  equipe2: string;
+  score1: number | null;
+  score2: number | null;
+  categorie: Category;
+};
+
 export default function PublicPage() {
-  const [scores, setScores] = useState<{ [key in Category]: any[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
-      const data = await res.json();
-      const scoresByCat: { [key in Category]: any[] } = { U11: [], U13: [] };
-      data.forEach((match: any) => {
-        scoresByCat[match.categorie as Category].push(match);
+      const data: Match[] = await res.json();
+      const scoresByCat: { [key in Category]: Match[] } = { U11: [], U13: [] };
+      data.forEach((match) => {
+        scoresByCat[match.categorie].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -31,11 +39,11 @@ export default function PublicPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, 10000); // Rafraîchissement toutes les 10 secondes
     return () => clearInterval(interval);
   }, []);
 
-  const calculateRanking = (matches: any[], category: Category) => {
+  const calculateRanking = (matches: Match[], category: Category) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
@@ -69,15 +77,15 @@ export default function PublicPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">🏆 Résultats Tournoi de Handball</h1>
+      <h1 className="text-2xl font-bold mb-4">Résultats Tournoi de Handball</h1>
       <Tabs defaultValue="U11" className="w-full">
-        <TabsList className="flex justify-center">
-          <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
-          <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="U11">U11</TabsTrigger>
+          <TabsTrigger value="U13">U13</TabsTrigger>
         </TabsList>
         {(Object.keys(teams) as Category[]).map((category) => (
           <TabsContent key={category} value={category}>
-            <div className="mb-4 mt-4">
+            <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2">Classement</h2>
               <table className="w-full text-sm">
                 <thead>
@@ -103,12 +111,11 @@ export default function PublicPage() {
             <div className="grid gap-4">
               {scores[category].map((match, index) => (
                 <Card key={index}>
-                  <CardContent className="flex items-center justify-between p-4 gap-4">
-                    <span>{match.equipe1}</span>
-                    <span className="text-lg font-semibold">{match.score1 ?? "-"}</span>
-                    <span>vs</span>
-                    <span className="text-lg font-semibold">{match.score2 ?? "-"}</span>
-                    <span>{match.equipe2}</span>
+                  <CardContent className="flex justify-between p-4 gap-4 text-center">
+                    <span className="w-1/4">{match.equipe1}</span>
+                    <span className="w-1/4 font-bold">{match.score1 ?? "-"}</span>
+                    <span className="w-1/4 font-bold">{match.score2 ?? "-"}</span>
+                    <span className="w-1/4">{match.equipe2}</span>
                   </CardContent>
                 </Card>
               ))}
