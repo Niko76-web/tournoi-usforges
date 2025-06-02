@@ -17,6 +17,19 @@ export default function LoginPage() {
       alert("Mot de passe incorrect.");
     }
   };
+  
+    <input
+    type="password"
+    placeholder="Mot de passe"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    onKeyDown={(e) => {
+        if (e.key === "Enter") {
+        handleLogin();
+        }
+    }}
+    className="border rounded px-4 py-2"
+    />
 
   return (
     <div className="flex flex-col items-center justify-center h-screen space-y-4">
