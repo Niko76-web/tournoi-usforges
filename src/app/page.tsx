@@ -7,23 +7,31 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const teams = {
-  U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Arques"],
+  U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Grandvilliers"],
   U13: ["U13 Forges", "U13 Aumale", "U13 Londinières", "U13 Gournay"],
 };
 
 type Category = keyof typeof teams;
 
+type Match = {
+  equipe1: string;
+  equipe2: string;
+  score1: number | null;
+  score2: number | null;
+  categorie: Category;
+};
+
 export default function TournamentApp() {
-  const [scores, setScores] = useState<{ [key in Category]: any[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
-      const data = await res.json();
-      const scoresByCat: { [key in Category]: any[] } = { U11: [], U13: [] };
-      data.forEach((match: any) => {
-        scoresByCat[match.categorie as Category].push(match);
+      const data: Match[] = await res.json();
+      const scoresByCat: { [key in Category]: Match[] } = { U11: [], U13: [] };
+      data.forEach((match) => {
+        scoresByCat[match.categorie].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -44,13 +52,7 @@ export default function TournamentApp() {
     await fetch("/api/scores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        categorie: category,
-        equipe1: match.equipe1,
-        equipe2: match.equipe2,
-        score1: match.score1,
-        score2: match.score2,
-      }),
+      body: JSON.stringify(match),
     });
   };
 
@@ -59,17 +61,26 @@ export default function TournamentApp() {
       const list = teams[category];
       for (let i = 0; i < list.length; i++) {
         for (let j = i + 1; j < list.length; j++) {
-          await fetch("/api/scores", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              categorie: category,
-              equipe1: list[i],
-              equipe2: list[j],
-              score1: null,
-              score2: null,
-            }),
-          });
+          try {
+            const response = await fetch("/api/scores", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                categorie: category,
+                equipe1: list[i],
+                equipe2: list[j],
+                score1: null,
+                score2: null,
+              }),
+            });
+
+            if (!response.ok) {
+              const err = await response.text();
+              console.error("Erreur de réponse API:", err);
+            }
+          } catch (error) {
+            console.error("Erreur de requête fetch:", error);
+          }
         }
       }
     }
@@ -88,7 +99,7 @@ export default function TournamentApp() {
     await fetchData();
   };
 
-  const calculateRanking = (matches: any[], category: Category) => {
+  const calculateRanking = (matches: Match[], category: Category) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
