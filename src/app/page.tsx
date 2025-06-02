@@ -1,10 +1,12 @@
 'use client';
 
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 
 const teams = {
   U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Grandvilliers"],
@@ -39,6 +41,13 @@ function generateMatchSchedule(totalMatches: number): string[] {
 }
 
 export default function TournamentApp() {
+  const router = useRouter();
+
+    useEffect(() => {
+      if (typeof window !== "undefined" && localStorage.getItem("isAdmin") !== "true") {
+    router.push("/login");
+    }
+  }, []);
   const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
   const fetchData = async () => {
