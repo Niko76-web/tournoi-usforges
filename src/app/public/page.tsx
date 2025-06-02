@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const teams = {
@@ -11,25 +12,18 @@ const teams = {
 
 type Category = keyof typeof teams;
 
-type Match = {
-  equipe1: string;
-  equipe2: string;
-  score1: number | null;
-  score2: number | null;
-  categorie: Category;
-};
-
 export default function PublicPage() {
-  const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
+  const [scores, setScores] = useState<{ [key in Category]: any[] }>({ U11: [], U13: [] });
+  const [activeTab, setActiveTab] = useState<Category>("U11");
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
-      const data: Match[] = await res.json();
-      const scoresByCat: { [key in Category]: Match[] } = { U11: [], U13: [] };
-      data.forEach((match) => {
-        scoresByCat[match.categorie].push(match);
+      const data = await res.json();
+      const scoresByCat: { [key in Category]: any[] } = { U11: [], U13: [] };
+      data.forEach((match: any) => {
+        scoresByCat[match.categorie as Category].push(match);
       });
       setScores(scoresByCat);
     } catch (error) {
@@ -39,11 +33,11 @@ export default function PublicPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000); // Rafraîchissement toutes les 10 secondes
+    const interval = setInterval(fetchData, 10000); // rafraîchit toutes les 10 secondes
     return () => clearInterval(interval);
   }, []);
 
-  const calculateRanking = (matches: Match[], category: Category) => {
+  const calculateRanking = (matches: any[], category: Category) => {
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
     teams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
@@ -76,16 +70,16 @@ export default function PublicPage() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Résultats Tournoi de Handball</h1>
+    <div className={`p-4 min-h-screen ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
+      <h1 className="text-2xl font-bold mb-4">Résultats en direct</h1>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
-          <TabsTrigger value="U11">U11</TabsTrigger>
-          <TabsTrigger value="U13">U13</TabsTrigger>
+          <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>
+          <TabsTrigger value="U13" onClick={() => setActiveTab("U13")}>Catégorie U13</TabsTrigger>
         </TabsList>
         {(Object.keys(teams) as Category[]).map((category) => (
           <TabsContent key={category} value={category}>
-            <div className="mb-4">
+            <div className="mb-4 mt-4">
               <h2 className="text-lg font-semibold mb-2">Classement</h2>
               <table className="w-full text-sm">
                 <thead>
@@ -111,11 +105,22 @@ export default function PublicPage() {
             <div className="grid gap-4">
               {scores[category].map((match, index) => (
                 <Card key={index}>
-                  <CardContent className="flex justify-between p-4 gap-4 text-center">
-                    <span className="w-1/4">{match.equipe1}</span>
-                    <span className="w-1/4 font-bold">{match.score1 ?? "-"}</span>
-                    <span className="w-1/4 font-bold">{match.score2 ?? "-"}</span>
-                    <span className="w-1/4">{match.equipe2}</span>
+                  <CardContent className="flex items-center justify-between p-4 gap-4">
+                    <span>{match.equipe1}</span>
+                    <Input
+                      type="number"
+                      className="w-16 bg-white"
+                      value={match.score1 ?? ""}
+                      readOnly
+                    />
+                    <span>vs</span>
+                    <Input
+                      type="number"
+                      className="w-16 bg-white"
+                      value={match.score2 ?? ""}
+                      readOnly
+                    />
+                    <span>{match.equipe2}</span>
                   </CardContent>
                 </Card>
               ))}
