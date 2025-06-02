@@ -50,6 +50,11 @@ export default function TournamentApp() {
   }, []);
   const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
+  const handleLogout = () => {
+  localStorage.removeItem("isAuthenticated");
+  window.location.href = "/login";
+  };
+
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
@@ -183,6 +188,11 @@ export default function TournamentApp() {
       <div className="flex gap-4 mb-4">
         <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
         <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>🗑️ Vider la base de données</Button>
+      </div>
+      <div className="flex justify-end mb-2">
+        <Button className="bg-gray-400 hover:bg-gray-500" onClick={handleLogout}>
+        🔒 Déconnexion
+        </Button>
       </div>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
