@@ -21,6 +21,23 @@ type Match = {
   categorie: Category;
 };
 
+function generateMatchSchedule(totalMatches: number): string[] {
+  const horaires: string[] = [];
+  const start = new Date();
+  start.setHours(9, 30, 0, 0); // 9h30
+
+  for (let i = 0; i < totalMatches; i++) {
+    const h = start.getHours().toString().padStart(2, "0");
+    const m = start.getMinutes().toString().padStart(2, "0");
+    horaires.push(`${h}h${m}`);
+
+    // 10 minutes de match + 5 minutes de pause
+    start.setMinutes(start.getMinutes() + 15);
+  }
+
+  return horaires;
+}
+
 export default function TournamentApp() {
   const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
@@ -87,6 +104,26 @@ export default function TournamentApp() {
     alert("Les matchs ont été générés avec succès !");
     await fetchData();
   };
+
+  const totalMatches = scores.U11.length + scores.U13.length;
+  const fullSchedule = generateMatchSchedule(totalMatches);
+
+  const horairesU11: string[] = [];
+  const horairesU13: string[] = [];
+
+  let iU11 = 0;
+  let iU13 = 0;
+
+  for (let i = 0; i < totalMatches; i++) {
+    const slot = fullSchedule[i];
+    if (i % 2 === 0 && iU11 < scores.U11.length) {
+      horairesU11.push(slot);
+      iU11++;
+    } else if (iU13 < scores.U13.length) {
+      horairesU13.push(slot);
+      iU13++;
+    }
+  }
 
   const clearDatabase = async () => {
     const confirmation = confirm("Voulez-vous vraiment supprimer tous les matchs ? Cette action est irréversible.");
@@ -172,6 +209,9 @@ export default function TournamentApp() {
               {scores[category].map((match, index) => (
                 <Card key={index}>
                   <CardContent className="flex items-center justify-between p-4 gap-4">
+                    <p className="text-sm text-gray-500">
+                      🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
+                    </p>
                     <span>{match.equipe1}</span>
                     <Input
                       type="number"
