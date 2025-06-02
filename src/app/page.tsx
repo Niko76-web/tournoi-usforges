@@ -41,6 +41,7 @@ function generateMatchSchedule(totalMatches: number): string[] {
 }
 
 export default function TournamentApp() {
+  const [activeTab, setActiveTab] = useState<Category>("U11");
   const router = useRouter();
 
     useEffect(() => {
@@ -194,6 +195,17 @@ export default function TournamentApp() {
         🔒 Déconnexion
         </Button>
       </div>
+      <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
+        <h1 className="text-2xl font-bold mb-4">Tournoi de Handball - U11 & U13</h1>
+        <Tabs defaultValue="U11" className="w-full">
+          <TabsList>
+            <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>
+            <TabsTrigger value="U13" onClick={() => setActiveTab("U13")}>Catégorie U13</TabsTrigger>
+          </TabsList>
+          {/* reste du contenu ici */}
+        </Tabs>
+      </div>
+
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
           <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
