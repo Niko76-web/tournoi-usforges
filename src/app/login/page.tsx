@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "Forges@7644"; // Valeur fallback
+
 export default function LoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+    if (password === PASSWORD) {
       localStorage.setItem("isAdmin", "true");
       router.push("/");
     } else {
@@ -32,3 +34,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
