@@ -105,22 +105,11 @@ export default function PublicPage() {
             <div className="grid gap-4">
               {scores[category].map((match, index) => (
                 <Card key={index}>
-                  <CardContent className="flex items-center justify-between p-4 gap-4">
-                    <span>{match.equipe1}</span>
-                    <Input
-                      type="number"
-                      className="w-16 bg-white"
-                      value={match.score1 ?? ""}
-                      readOnly
-                    />
-                    <span>vs</span>
-                    <Input
-                      type="number"
-                      className="w-16 bg-white"
-                      value={match.score2 ?? ""}
-                      readOnly
-                    />
-                    <span>{match.equipe2}</span>
+                  <CardContent className="flex justify-between p-4 gap-4 text-center">
+                    <span className="w-1/4">{match.equipe1}</span>
+                    <span className="w-1/4 font-bold">{match.score1 ?? "-"}</span>
+                    <span className="w-1/4 font-bold">{match.score2 ?? "-"}</span>
+                    <span className="w-1/4">{match.equipe2}</span>
                   </CardContent>
                 </Card>
               ))}
