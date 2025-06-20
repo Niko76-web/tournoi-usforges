@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleLogin = () => {
     if (password === PASSWORD) {
       localStorage.setItem("isAdmin", "true");
-      router.push("/");
+      router.push("/admin");
     } else {
       alert("Mot de passe incorrect.");
     }
