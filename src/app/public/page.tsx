@@ -12,6 +12,14 @@ const teams = {
 
 type Category = keyof typeof teams;
 
+function getLogoSrc(teamName: string) {
+  // Exemple : "U11 Forges" -> "forges.png"
+  const parts = teamName.split(" ");
+  const clubName = parts.slice(1).join("-").toLowerCase();
+  return `/logos/${clubName}.png`;
+}
+
+
 function generateMatchSchedule(totalMatches: number): string[] {
   const horaires: string[] = [];
   const start = new Date();
@@ -147,10 +155,18 @@ export default function PublicPage() {
                     <p className="text-sm text-gray-500">
                       🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
                     </p>
-                    <span className="w-1/4">{match.equipe1}</span>
+                    <div className="w-1/4 flex items-center gap-2">
+                      <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                      <span>{match.equipe1}</span>
+                    </div>
+                    
                     <span className="w-1/4 font-bold">{match.score1 ?? "-"}</span>
                     <span className="w-1/4 font-bold">{match.score2 ?? "-"}</span>
-                    <span className="w-1/4">{match.equipe2}</span>
+                    
+                    <div className="w-1/4 flex items-center gap-2 justify-end">
+                      <span>{match.equipe2}</span>
+                      <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
