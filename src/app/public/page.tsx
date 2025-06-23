@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const teams = {
-  U11: ["U11 Forges", "U11 Aumale", "U11 Londinières", "U11 Grandvilliers"],
-  U13: ["U13 Forges", "U13 Aumale", "U13 Londinières", "U13 Gournay"],
+  U11: ["U11 Forges", "U11 Aumale", "U11 Foucarmont"],
+  U13: ["U13 Forges", "U13 Aumale", "U13 Gournay"],
 };
 
 type Category = keyof typeof teams;
