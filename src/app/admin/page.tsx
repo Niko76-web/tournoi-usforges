@@ -224,7 +224,10 @@ export default function TournamentApp() {
               <tbody>
                 {calculateRanking(scores[category], category).map(([team, stats]) => (
                   <tr key={team} className="border-t">
-                    <td>{team}</td>
+                    <td className="flex items-center gap-2">
+                      <img src={getLogoSrc(team)} alt={team} className="w-6 h-6 object-contain" />
+                      <span>{team}</span>
+                    </td>
                     <td className="text-center">{stats.pts}</td>
                     <td className="text-center">{stats.played}</td>
                     <td className="text-center">{stats.goalsDiff}</td>
