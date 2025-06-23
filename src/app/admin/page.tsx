@@ -235,27 +235,37 @@ export default function TournamentApp() {
           </div>
 
           <div className="grid gap-4">
-            {scores[category].map((match, index) => (
-              <Card key={index}>
-                <CardContent className="flex items-center justify-between p-4 gap-4">
-                  <p className="text-sm text-gray-500">
-                    🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
-                  </p>
-                  <span>{match.equipe1}</span>
-                  <Input
-                    type="number"
-                    className="w-16"
-                    value={match.score1 ?? ""}
-                    onChange={(e) => updateScore(category, index, "score1", e.target.value)}
-                  />
-                  <span>vs</span>
-                  <Input
-                    type="number"
-                    className="w-16"
-                    value={match.score2 ?? ""}
-                    onChange={(e) => updateScore(category, index, "score2", e.target.value)}
-                  />
-                  <span>{match.equipe2}</span>
+              {scores[category].map((match, index) => (
+                <Card key={index}>
+                  <CardContent className="flex items-center justify-between p-4 gap-4">
+                    <p className="text-sm text-gray-500">
+                      🕒 {category === "U11" ? horairesU11[index] : horairesU13[index]}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                      <span>{match.equipe1}</span>
+                    </div>
+
+                    <Input
+                      type="number"
+                      className="w-16"
+                      value={match.score1 ?? ""}
+                      onChange={(e) => updateScore(category, index, "score1", e.target.value)}
+                    />
+
+                    <span>vs</span>
+
+                    <Input
+                      type="number"
+                      className="w-16"
+                      value={match.score2 ?? ""}
+                      onChange={(e) => updateScore(category, index, "score2", e.target.value)}
+                    />
+
+                    <div className="flex items-center gap-2">
+                      <span>{match.equipe2}</span>
+                      <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                    </div>
                 </CardContent>
               </Card>
             ))}
