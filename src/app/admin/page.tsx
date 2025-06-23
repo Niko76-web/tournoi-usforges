@@ -23,6 +23,12 @@ type Match = {
   categorie: Category;
 };
 
+function getLogoSrc(teamName: string) {
+  const parts = teamName.split(" ");
+  const clubName = parts.slice(1).join("-").toLowerCase();
+  return `/logos/${clubName}.png`;
+}
+
 function generateMatchSchedule(totalMatches: number): string[] {
   const horaires: string[] = [];
   const start = new Date();
