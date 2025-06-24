@@ -194,6 +194,11 @@ export default function TournamentApp() {
     <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-2">Tournoi de l'US Forges les eaux</h1>
         <p className="mb-6 text-lg">Interface de saisie des scores</p>
+          <img 
+            src="/logos/forges.png"
+            alt="Logo US Forges"
+            className="absolute top-4 right-4 w-24 h-auto"
+          />
 
       <div className="flex gap-4 mb-4">
         <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
