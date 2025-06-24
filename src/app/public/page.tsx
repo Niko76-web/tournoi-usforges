@@ -112,12 +112,17 @@ export default function PublicPage() {
       horairesU13.push(slot);
       iU13++;
     }
-  }
-
+  };
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
-      <h1 className="text-2xl font-bold mb-4">Résultats en direct</h1>
+  <div
+    className={`min-h-screen transition-colors duration-500 ${
+      activeTab === "U11" ? "bg-blue-100" : "bg-green-100"
+    }`}
+  >
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-2">Résultats en direct</h1>
+      <p className="mb-6 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
           <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>
@@ -178,5 +183,6 @@ export default function PublicPage() {
         ))}
       </Tabs>
     </div>
+  </div>
   );
 }
