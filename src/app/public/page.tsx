@@ -123,6 +123,11 @@ export default function PublicPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-2">Résultats en direct</h1>
       <p className="mb-6 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
+        <img 
+        src="/logos/forges.png"
+        alt="Logo US Forges"
+        className="absolute top-4 right-4 w-24 h-auto"
+        />
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
           <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>

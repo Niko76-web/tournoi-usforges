@@ -192,7 +192,7 @@ export default function TournamentApp() {
   return (
   <div className={`min-h-screen p-4 transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
     <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-2">Tournoi de l'US Dorges les eaux</h1>
+        <h1 className="text-2xl font-bold mb-2">Tournoi de l'US Forges les eaux</h1>
         <p className="mb-6 text-lg">Interface de saisie des scores</p>
 
       <div className="flex gap-4 mb-4">
