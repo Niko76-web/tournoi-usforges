@@ -27,10 +27,12 @@ type Match = {
   score2?: number | null;
 };
 
-function getLogoSrc(teamName: string) {
-  // Prend le dernier mot, en minuscules, pour matcher les fichiers (forges, foucarmont, gournay)
-  const club = teamName.split(" ").at(-1)?.toLowerCase() ?? "forges";
-  return `/logos/${club}.png`;
+const getLogoSrc = (teamName: string) => {
+    // "Forges 1" -> "forges.png" (logo principal du club)
+    // Si tu veux différencier les 1/2, ajoute une condition ici
+    const parts = teamName.split(" ");
+    const club = parts[0].toLowerCase();
+    return `/logos/${club}.png`; 
 }
 
 export default function PublicPage() {
