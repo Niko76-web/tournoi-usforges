@@ -249,42 +249,87 @@ const generateMatches = async () => {
                 </table>
               </div>
               {/* LISTE DES MATCHS */}
-              <div className="grid gap-4">
-                {scores[category]
-                  .sort((a, b) => (a.phase === "matin" && b.phase !== "matin" ? -1 : 1)) // Matin d'abord, puis après-midi
-                  .map((match, idx) => (
-                  <Card key={match.id ?? idx}>
-                    <CardContent className="flex items-center justify-between p-4 gap-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-500">
-                          🕒 {match.heure} {match.phase === "matin" ? `(Terrain ${match.terrain})` : ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                        <span>{match.equipe1}</span>
-                      </div>
-                      <Input
-                        type="number"
-                        className="w-16"
-                        value={match.score1 ?? ""}
-                        onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
-                      />
-                      <span>vs</span>
-                      <Input
-                        type="number"
-                        className="w-16"
-                        value={match.score2 ?? ""}
-                        onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
-                      />
-                      <div className="flex items-center gap-2">
-                        <span>{match.equipe2}</span>
-                        <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {/* MATCHS DU MATIN */}
+                <h3 className="text-lg font-semibold text-blue-700 mb-2 mt-4">Matin - Hand à 4</h3>
+                <div className="grid gap-4 mb-6">
+                  {scores[category]
+                    .filter((match) => match.phase === "matin")
+                    .sort((a, b) => (a.heure || "").localeCompare(b.heure || ""))
+                    .map((match, idx) => (
+                      <Card key={match.id ?? idx}>
+                        <CardContent className="flex items-center justify-between p-4 gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-500">
+                              🕒 {match.heure} {match.phase === "matin" ? `(Terrain ${match.terrain})` : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                            <span>{match.equipe1}</span>
+                          </div>
+                          <Input
+                            type="number"
+                            className="w-16"
+                            value={match.score1 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                          />
+                          <span>vs</span>
+                          <Input
+                            type="number"
+                            className="w-16"
+                            value={match.score2 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                          />
+                          <div className="flex items-center gap-2">
+                            <span>{match.equipe2}</span>
+                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+
+                {/* SÉPARATEUR */}
+                <div className="text-center text-xl font-bold text-green-700 mb-2 mt-8 border-t-2 border-green-200 pt-4">
+                  Match amical équipe complète
+                </div>
+
+                {/* MATCHS DE L’APRÈS-MIDI */}
+                <div className="grid gap-4">
+                  {scores[category]
+                    .filter((match) => match.phase === "apresmidi")
+                    .sort((a, b) => (a.heure || "").localeCompare(b.heure || ""))
+                    .map((match, idx) => (
+                      <Card key={match.id ?? idx}>
+                        <CardContent className="flex items-center justify-between p-4 gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-500">🕒 {match.heure}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                            <span>{match.equipe1}</span>
+                          </div>
+                          <Input
+                            type="number"
+                            className="w-16"
+                            value={match.score1 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                          />
+                          <span>vs</span>
+                          <Input
+                            type="number"
+                            className="w-16"
+                            value={match.score2 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                          />
+                          <div className="flex items-center gap-2">
+                            <span>{match.equipe2}</span>
+                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
             </TabsContent>
           ))}
         </Tabs>
