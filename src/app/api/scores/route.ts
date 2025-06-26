@@ -26,8 +26,6 @@ export async function POST(req: Request) {
           equipe1,
           equipe2,
           phase,
-          terrain,
-          heure,
         },
       },
       update: {
