@@ -109,7 +109,7 @@ export default function PublicPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
-      <div className="max-w-4xl mx-auto px-2 sm:px-8 py-6">
+      <div className="w-full max-w-2xl mx-auto px-2 sm:px-8 py-6">
         {/* Titre et logo club */}
         <div className="flex justify-between items-start mb-2">
           <div>
@@ -164,23 +164,23 @@ export default function PublicPage() {
                   <h3 className="text-base font-bold text-gray-700 mb-2">Matchs du matin (Hand à 4 sur 2 terrains)</h3>
                   <div className="grid gap-4">
                     {matin.map((match, idx) => (
-                      <Card key={match.id ?? idx}>
-                        <CardContent className="flex items-center justify-between p-4 gap-4">
-                          <div className="flex flex-col text-xs text-gray-500">
+                      <Card key={match.id ?? idx} className="w-full" >
+                        <CardContent className="w-full flex flex-col sm:flex-row items-center justify-between p-4 gap-2 sm:gap-4 overflow-x-auto">
+                          <div className="flex flex-col text-xs text-gray-500 w-full sm:w-auto mb-2 sm:mb-0">
                             <span>
                               🕒 {match.heure} {match.terrain ? `(Terrain ${match.terrain})` : ""}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                            <span>{match.equipe1}</span>
+                          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
+                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-7 h-7 object-contain" />
+                            <span className="text-sm">{match.equipe1}</span>
                           </div>
-                          <span className="w-12 text-center text-lg font-bold">{match.score1 ?? "-"}</span>
+                          <span className="w-8 text-center text-base font-bold">{match.score1 ?? "-"}</span>
                           <span>vs</span>
-                          <span className="w-12 text-center text-lg font-bold">{match.score2 ?? "-"}</span>
-                          <div className="flex items-center gap-2">
-                            <span>{match.equipe2}</span>
-                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                          <span className="w-8 text-center text-base font-bold">{match.score2 ?? "-"}</span>
+                          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-end">
+                            <span className="text-sm">{match.equipe2}</span>
+                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-7 h-7 object-contain" />
                           </div>
                         </CardContent>
                       </Card>
