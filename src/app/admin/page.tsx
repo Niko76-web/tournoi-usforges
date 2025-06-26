@@ -52,7 +52,7 @@ function generateMorningMatches(teams: string[], categorie: string) {
       matchNumber++;
       terrain = terrain === 1 ? 2 : 1;
       if (matchNumber % 2 === 0) {
-        horaire.setMinutes(horaire.getMinutes() + 11); // 6 min match + 5 min pause
+        horaire.setMinutes(horaire.getMinutes() + 10); // 6 min match + 4 min pause
       }
     }
   }
