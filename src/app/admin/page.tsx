@@ -50,75 +50,89 @@ export default function TournamentAdmin() {
     fetchData();
   }, []);
 
-  // Génère tous les matchs selon la configuration
-  const generateMatches = async () => {
-    // 1. Matches du matin (poule sur 2 terrains, horaires à partir de 10h00)
-    let matinStart = new Date();
-    matinStart.setHours(10, 0, 0, 0);
-    let allMatches: Match[] = [];
+  // À placer dans ton composant admin/page.tsx
 
-    // Pour chaque catégorie (U11/U13)
-    (["U11", "U13"] as Category[]).forEach((cat) => {
-      const teams = matinTeams[cat];
-      let roundMatches: Match[] = [];
-      // Round Robin
-      for (let i = 0; i < teams.length; i++) {
-        for (let j = i + 1; j < teams.length; j++) {
-          roundMatches.push({
-            categorie: cat,
-            equipe1: teams[i],
-            equipe2: teams[j],
-            phase: "matin",
-          });
-        }
+const matinTeams: Record<Category, string[]> = {
+  U11: ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"],
+  U13: ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"],
+};
+
+// Génère tous les matchs selon la configuration
+const generateMatches = async () => {
+  // 1. Matches du matin (poule sur 2 terrains, horaires à partir de 10h00)
+  let matinStart = new Date();
+  matinStart.setHours(10, 0, 0, 0);
+  let allMatches: any[] = [];
+
+  // Pour chaque catégorie (U11/U13)
+  (["U11", "U13"] as Category[]).forEach((cat) => {
+    const teams = matinTeams[cat];
+    let roundMatches: any[] = [];
+    // Round Robin (toutes les rencontres possibles)
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        roundMatches.push({
+          categorie: cat,
+          equipe1: teams[i],
+          equipe2: teams[j],
+          phase: "matin",
+          score1: null,
+          score2: null,
+        });
       }
-      // Attribution horaires/terrains (2 terrains en parallèle)
-      let slotTime = new Date(matinStart);
-      for (let k = 0; k < roundMatches.length; k++) {
-        // terrain alterné 1/2, 2 matchs en parallèle = même horaire
-        const terrain = k % 2 === 0 ? 1 : 2;
-        roundMatches[k].terrain = terrain;
-        roundMatches[k].heure = `${slotTime.getHours().toString().padStart(2, "0")}h${slotTime.getMinutes().toString().padStart(2, "0")}`;
-        if (terrain === 2) {
-          // Après les 2 terrains, avance l'heure pour la prochaine paire
-          slotTime.setMinutes(slotTime.getMinutes() + 6 + 4); // 6 min match + 4 min pause
-        }
-      }
-      allMatches.push(...roundMatches);
-    });
-
-    // 2. Après-midi : Un seul match U11 puis U13 sur grand terrain
-    allMatches.push({
-      categorie: "U11",
-      equipe1: "Forges",
-      equipe2: "Foucarmont",
-      phase: "apresmidi",
-      terrain: 1,
-      heure: "14h00",
-    });
-    allMatches.push({
-      categorie: "U13",
-      equipe1: "Forges",
-      equipe2: "Gournay",
-      phase: "apresmidi",
-      terrain: 1,
-      heure: "15h00",
-    });
-
-    // Vide la base d'abord pour éviter doublons
-    await fetch("/api/scores", { method: "DELETE" });
-
-    // Enregistre tous les matchs
-    for (const match of allMatches) {
-      await fetch("/api/scores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(match),
-      });
     }
-    alert("Les matchs ont été générés avec horaires et terrains !");
-    await fetchData();
-  };
+    // Attribution horaires/terrains (2 terrains en parallèle)
+    let slotTime = new Date(matinStart);
+    for (let k = 0; k < roundMatches.length; k++) {
+      // terrain alterné 1/2, 2 matchs en parallèle = même horaire
+      const terrain = k % 2 === 0 ? 1 : 2;
+      roundMatches[k].terrain = terrain;
+      roundMatches[k].heure = `${slotTime.getHours().toString().padStart(2, "0")}h${slotTime.getMinutes().toString().padStart(2, "0")}`;
+      if (terrain === 2) {
+        // Après les 2 terrains, avance l'heure pour la prochaine paire
+        slotTime.setMinutes(slotTime.getMinutes() + 6 + 4); // 6 min match + 4 min pause
+      }
+    }
+    allMatches.push(...roundMatches);
+  });
+
+  // 2. Après-midi : Un seul match U11 puis U13 sur grand terrain
+  allMatches.push({
+    categorie: "U11",
+    equipe1: "Forges",
+    equipe2: "Foucarmont",
+    phase: "apresmidi",
+    terrain: 1,
+    heure: "14h00",
+    score1: null,
+    score2: null,
+  });
+  allMatches.push({
+    categorie: "U13",
+    equipe1: "Forges",
+    equipe2: "Gournay",
+    phase: "apresmidi",
+    terrain: 1,
+    heure: "15h00",
+    score1: null,
+    score2: null,
+  });
+
+  // Vide la base d'abord pour éviter doublons
+  await fetch("/api/scores", { method: "DELETE" });
+
+  // Enregistre tous les matchs
+  for (const match of allMatches) {
+    await fetch("/api/scores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(match),
+    });
+  }
+  alert("Les matchs ont été générés avec horaires et terrains !");
+  await fetchData();
+};
+
 
   // Update d'un score
   const updateScore = async (category: Category, index: number, team: "score1" | "score2", value: string) => {
