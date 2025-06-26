@@ -127,7 +127,7 @@ export default function PublicPage() {
         <p className="mt-2 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
       </div>
       <img
-        src="/logosite.png"
+        src="/logos/forges.png"
         alt="Logo US Forges"
         className="w-20 h-auto sm:w-28 ml-4"
         style={{ maxHeight: "84px" }}
