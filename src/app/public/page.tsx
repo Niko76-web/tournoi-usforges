@@ -121,14 +121,18 @@ export default function PublicPage() {
     }`}
   >
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-2">Résultats en direct</h1>
-      <p className="mb-6 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
-        <img 
-          src="/logos/forges.png"
-          alt="Logo US Forges"
-          className="absolute top-4 right-2 w-16 sm:w-24 sm:right-8 h-auto"
-          style={{ zIndex: 10 }}
-        />
+      <div className="flex justify-between items-start mb-2">
+      <div>
+        <h1 className="text-2xl font-bold">Résultats en direct</h1>
+        <p className="mt-2 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
+      </div>
+      <img
+        src="/logosite.png"
+        alt="Logo US Forges"
+        className="w-20 h-auto sm:w-28 ml-4"
+        style={{ maxHeight: "84px" }}
+      />
+    </div>
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
           <TabsTrigger value="U11" onClick={() => setActiveTab("U11")}>Catégorie U11</TabsTrigger>
