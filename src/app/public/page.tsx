@@ -124,9 +124,10 @@ export default function PublicPage() {
       <h1 className="text-2xl font-bold mb-2">Résultats en direct</h1>
       <p className="mb-6 text-lg">Bienvenue au premier tournoi de l'US Forges-les-Eaux !!!</p>
         <img 
-        src="/logos/forges.png"
-        alt="Logo US Forges"
-        className="absolute top-4 right-4 w-24 h-auto"
+          src="/logos/forges.png"
+          alt="Logo US Forges"
+          className="absolute top-4 right-2 w-16 sm:w-24 sm:right-8 h-auto"
+          style={{ zIndex: 10 }}
         />
       <Tabs defaultValue="U11" className="w-full">
         <TabsList>
