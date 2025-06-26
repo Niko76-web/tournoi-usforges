@@ -135,16 +135,19 @@ const generateMatches = async () => {
 
 
   // Update d'un score
-  const updateScore = async (category: Category, index: number, team: "score1" | "score2", value: string) => {
-    const updated = [...scores[category]];
-    updated[index][team] = parseInt(value, 10);
-    setScores({ ...scores, [category]: updated });
+  const updateScore = async (category: Category, matchId: number, team: "score1" | "score2", value: string) => {
+    const updatedMatches = scores[category].map((m) =>
+    m.id === matchId ? { ...m, [team]: parseInt(value, 10) } : m
+  );
+  setScores({ ...scores, [category]: updatedMatches });
 
-    const match = updated[index];
-    await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(match),
+  const match = updatedMatches.find((m) => m.id === matchId);
+  if (!match) return;
+
+  await fetch("/api/scores", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(match),
     });
   };
 
@@ -271,14 +274,14 @@ const generateMatches = async () => {
                             type="number"
                             className="w-16"
                             value={match.score1 ?? ""}
-                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score1", e.target.value)}
                           />
                           <span>vs</span>
                           <Input
                             type="number"
                             className="w-16"
                             value={match.score2 ?? ""}
-                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score2", e.target.value)}
                           />
                           <div className="flex items-center gap-2">
                             <span>{match.equipe2}</span>
@@ -313,14 +316,14 @@ const generateMatches = async () => {
                             type="number"
                             className="w-16"
                             value={match.score1 ?? ""}
-                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score1", e.target.value)}
                           />
                           <span>vs</span>
                           <Input
                             type="number"
                             className="w-16"
                             value={match.score2 ?? ""}
-                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score2", e.target.value)}
                           />
                           <div className="flex items-center gap-2">
                             <span>{match.equipe2}</span>
