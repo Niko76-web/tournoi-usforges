@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { categorie, equipe1, equipe2, score1, score2, phase } = body;
+    const { categorie, equipe1, equipe2, score1, score2, phase, terrain, heure } = body;
 
     const match = await prisma.matchs.upsert({
       where: {
@@ -26,12 +26,16 @@ export async function POST(req: Request) {
           equipe1,
           equipe2,
           phase,
+          terrain,
+          heure,
         },
       },
       update: {
         score1,
         score2,
         phase,
+        terrain,
+        heure,
       },
       create: {
         categorie,
@@ -40,6 +44,8 @@ export async function POST(req: Request) {
         score1,
         score2,
         phase,
+        terrain,
+        heure,
       },
     });
 
