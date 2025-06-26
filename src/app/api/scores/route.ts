@@ -16,20 +16,22 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { categorie, equipe1, equipe2, score1, score2 } = body;
+    const { categorie, equipe1, equipe2, score1, score2, phase } = body;
 
     const match = await prisma.matchs.upsert({
       where: {
         // nommage automatique généré par Prisma pour une clé composite :
-        categorie_equipe1_equipe2: {
+        categorie_equipe1_equipe2_phase: {
           categorie,
           equipe1,
           equipe2,
+          phase,
         },
       },
       update: {
         score1,
         score2,
+        phase,
       },
       create: {
         categorie,
@@ -37,6 +39,7 @@ export async function POST(req: Request) {
         equipe2,
         score1,
         score2,
+        phase,
       },
     });
 

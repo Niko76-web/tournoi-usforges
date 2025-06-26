@@ -8,13 +8,17 @@ datasource db {
 }
 
 model Matchs {
-  id        Int    @id @default(autoincrement())
-  categorie String
+  id        Int     @id @default(autoincrement())
+  categorie String  // "U11" ou "U13"
   equipe1   String
   equipe2   String
-  score1    Int?
-  score2    Int?
-
-  @@unique([categorie, equipe1, equipe2])
-  @@map("matchs") // <-- force Prisma à utiliser une table `matchs` en minuscules
+  phase     String  // "matin" ou "apresmidi"
+  terrain   Int?    // pour le matin (sinon null)
+  heure     String? // ex: "10h00" ou "14h00"
+  miTemps1  Int?    // score équipe1 mi-temps 1 (après-midi)
+  miTemps2  Int?    // score équipe1 mi-temps 2 (après-midi)
+  score1    Int?    // total ou score unique (matin)
+  score2    Int?    // total ou score unique (matin)
+  @@map("matchs") // force Prisma à utiliser une table `matchs` en minuscules
+  @@unique([categorie, equipe1, equipe2, phase])
 }
