@@ -6,104 +6,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-// === PARAMÈTRES TOURNOI ===
+// Equipes du matin (poule)
+const U11_MATIN = ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"];
+const U13_MATIN = ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"];
+const matinTeams: { [key: string]: string[] } = { U11: U11_MATIN, U13: U13_MATIN };
 
-// Equipes
-const teamsU11 = ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"];
-const teamsU13 = ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"];
+type Category = "U11" | "U13";
+type Phase = "matin" | "apresmidi";
 
-// Equipes après-midi
-const teamsU11Aprem = ["Forges", "Foucarmont"];
-const teamsU13Aprem = ["Forges", "Gournay"];
-
-// Fonction pour logo
-function getLogoSrc(teamName: string) {
-  const base = teamName.toLowerCase().replace(/ .*/, "");
-  return `/logos/${base}.png`;
+interface Match {
+  id?: number;
+  categorie: Category;
+  equipe1: string;
+  equipe2: string;
+  phase: Phase;
+  terrain?: number;
+  heure?: string;
+  score1?: number | null;
+  score2?: number | null;
 }
 
-// ---- GÉNÉRATION DES MATCHS ----
+export default function TournamentAdmin() {
+  const [activeTab, setActiveTab] = useState<Category>("U11");
+  const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
 
-// Matches matin poule 4 équipes sur 2 terrains
-function generateMorningMatches(teams: string[], categorie: string) {
-  // Round robin entre 4 équipes (6 matchs)
-  const matchs: any[] = [];
-  let horaire = new Date();
-  horaire.setHours(10, 0, 0, 0); // 10h00
-
-  let terrain = 1;
-  let matchNumber = 0;
-  for (let i = 0; i < teams.length; i++) {
-    for (let j = i + 1; j < teams.length; j++) {
-      const h = horaire.getHours().toString().padStart(2, "0");
-      const m = horaire.getMinutes().toString().padStart(2, "0");
-      matchs.push({
-        categorie,
-        equipe1: teams[i],
-        equipe2: teams[j],
-        phase: "matin",
-        terrain,
-        heure: `${h}h${m}`,
-        score1: null,
-        score2: null,
-      });
-
-      // Avance horaire et alterne terrain
-      matchNumber++;
-      terrain = terrain === 1 ? 2 : 1;
-      if (matchNumber % 2 === 0) {
-        horaire.setMinutes(horaire.getMinutes() + 10); // 6 min match + 4 min pause
-      }
-    }
-  }
-  return matchs;
-}
-
-// Matchs après-midi
-function getAfternoonMatches() {
-  return [
-    // U11 - 2 mi-temps de 12 min
-    {
-      categorie: "U11",
-      equipe1: "Forges",
-      equipe2: "Foucarmont",
-      phase: "apresmidi",
-      heure: "14h00",
-      miTemps1: null,
-      miTemps2: null,
-      score1: null,
-      score2: null,
-    },
-    // U13 - 2 mi-temps de 15 min
-    {
-      categorie: "U13",
-      equipe1: "Forges",
-      equipe2: "Gournay",
-      phase: "apresmidi",
-      heure: "15h00",
-      miTemps1: null,
-      miTemps2: null,
-      score1: null,
-      score2: null,
-    },
-  ];
-}
-
-export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"matin" | "apresmidi">("matin");
-  const [scoresMatin, setScoresMatin] = useState<any[]>([]);
-  const [scoresAprem, setScoresAprem] = useState<any[]>([]);
-
-  // Récupère les matchs depuis la BDD (triés par phase)
+  // Récupère tous les matchs
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
-      const data = await res.json();
-      setScoresMatin(data.filter((m: any) => m.phase === "matin"));
-      setScoresAprem(data.filter((m: any) => m.phase === "apresmidi"));
+      const data: Match[] = await res.json();
+      const byCat: { [key in Category]: Match[] } = { U11: [], U13: [] };
+      data.forEach((m) => {
+        byCat[m.categorie].push(m);
+      });
+      setScores(byCat);
     } catch (error) {
-      console.error("Erreur chargement:", error);
+      console.error("Erreur fetch:", error);
     }
   };
 
@@ -111,177 +50,229 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
-  // Génère tous les matchs
-  const generateAllMatches = async () => {
-    if (!confirm("Cette action va écraser les matchs existants ! Continuer ?")) return;
-    // Vide la base
+  // Génère tous les matchs selon la configuration
+  const generateMatches = async () => {
+    // 1. Matches du matin (poule sur 2 terrains, horaires à partir de 10h00)
+    let matinStart = new Date();
+    matinStart.setHours(10, 0, 0, 0);
+    let allMatches: Match[] = [];
+
+    // Pour chaque catégorie (U11/U13)
+    (["U11", "U13"] as Category[]).forEach((cat) => {
+      const teams = matinTeams[cat];
+      let roundMatches: Match[] = [];
+      // Round Robin
+      for (let i = 0; i < teams.length; i++) {
+        for (let j = i + 1; j < teams.length; j++) {
+          roundMatches.push({
+            categorie: cat,
+            equipe1: teams[i],
+            equipe2: teams[j],
+            phase: "matin",
+          });
+        }
+      }
+      // Attribution horaires/terrains (2 terrains en parallèle)
+      let slotTime = new Date(matinStart);
+      for (let k = 0; k < roundMatches.length; k++) {
+        // terrain alterné 1/2, 2 matchs en parallèle = même horaire
+        const terrain = k % 2 === 0 ? 1 : 2;
+        roundMatches[k].terrain = terrain;
+        roundMatches[k].heure = `${slotTime.getHours().toString().padStart(2, "0")}h${slotTime.getMinutes().toString().padStart(2, "0")}`;
+        if (terrain === 2) {
+          // Après les 2 terrains, avance l'heure pour la prochaine paire
+          slotTime.setMinutes(slotTime.getMinutes() + 6 + 4); // 6 min match + 4 min pause
+        }
+      }
+      allMatches.push(...roundMatches);
+    });
+
+    // 2. Après-midi : Un seul match U11 puis U13 sur grand terrain
+    allMatches.push({
+      categorie: "U11",
+      equipe1: "Forges",
+      equipe2: "Foucarmont",
+      phase: "apresmidi",
+      terrain: 1,
+      heure: "14h00",
+    });
+    allMatches.push({
+      categorie: "U13",
+      equipe1: "Forges",
+      equipe2: "Gournay",
+      phase: "apresmidi",
+      terrain: 1,
+      heure: "15h00",
+    });
+
+    // Vide la base d'abord pour éviter doublons
     await fetch("/api/scores", { method: "DELETE" });
 
-    // Génère matin U11 + U13
-    const matchs = [
-      ...generateMorningMatches(teamsU11, "U11"),
-      ...generateMorningMatches(teamsU13, "U13"),
-      ...getAfternoonMatches(),
-    ];
-    for (const match of matchs) {
+    // Enregistre tous les matchs
+    for (const match of allMatches) {
       await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(match),
       });
     }
-    alert("Matchs générés !");
+    alert("Les matchs ont été générés avec horaires et terrains !");
     await fetchData();
   };
 
-  // Mise à jour score matin
-  const updateScoreMatin = async (matchId: number, team: "score1" | "score2", value: string) => {
-    const match = scoresMatin.find((m) => m.id === matchId);
-    if (!match) return;
-    match[team] = parseInt(value, 10);
+  // Update d'un score
+  const updateScore = async (category: Category, index: number, team: "score1" | "score2", value: string) => {
+    const updated = [...scores[category]];
+    updated[index][team] = parseInt(value, 10);
+    setScores({ ...scores, [category]: updated });
+
+    const match = updated[index];
     await fetch("/api/scores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(match),
     });
+  };
+
+  // Supprime tous les matchs
+  const clearDatabase = async () => {
+    if (!confirm("Supprimer tous les matchs ?")) return;
+    await fetch("/api/scores", { method: "DELETE" });
+    alert("La base de données a été vidée.");
     await fetchData();
   };
 
-  // Mise à jour score aprem (mi-temps et total)
-  const updateScoreAprem = async (matchId: number, field: "miTemps1" | "miTemps2", value: string) => {
-    const match = scoresAprem.find((m) => m.id === matchId);
-    if (!match) return;
-    match[field] = parseInt(value, 10);
-    // Calcul du total
-    match.score1 = match.miTemps1 ?? 0 + match.miTemps2 ?? 0;
-    await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(match),
+  // Calcul du classement (matin uniquement, phase de poule)
+  const calculateRanking = (matches: Match[], category: Category) => {
+    // Ne prend que les matchs du matin
+    const poule = matches.filter((m) => m.phase === "matin");
+    // Toutes les équipes du matin
+    const equipes = matinTeams[category];
+    const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
+    equipes.forEach((team) => {
+      points[team] = { pts: 0, played: 0, goalsDiff: 0 };
     });
-    await fetchData();
+
+    poule.forEach((match) => {
+      if (match.score1 == null || match.score2 == null) return;
+      const { equipe1, equipe2, score1, score2 } = match;
+      points[equipe1].played++;
+      points[equipe2].played++;
+      points[equipe1].goalsDiff += score1 - score2;
+      points[equipe2].goalsDiff += score2 - score1;
+
+      if (score1 > score2) {
+        points[equipe1].pts += 3;
+        points[equipe2].pts += 1;
+      } else if (score1 < score2) {
+        points[equipe1].pts += 1;
+        points[equipe2].pts += 3;
+      } else {
+        points[equipe1].pts += 2;
+        points[equipe2].pts += 2;
+      }
+    });
+
+    return Object.entries(points).sort((a, b) => {
+      if (b[1].pts !== a[1].pts) return b[1].pts - a[1].pts;
+      return b[1].goalsDiff - a[1].goalsDiff;
+    });
   };
 
-  // Bouton déconnexion (si besoin)
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    window.location.href = "/login";
+  // Affichage logo équipe (si tu veux)
+  const getLogoSrc = (teamName: string) => {
+    // "Forges 1" -> "forges.png" (logo principal du club)
+    // Si tu veux différencier les 1/2, ajoute une condition ici
+    const parts = teamName.split(" ");
+    const club = parts[0].toLowerCase();
+    return `/logos/${club}.png`;
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${activeTab === "matin" ? "bg-blue-100" : "bg-green-100"}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Tournoi - Admin</h1>
-            <p className="mt-2 text-lg">
-              {activeTab === "matin"
-                ? "Matin : Hand à 4 (2 terrains, chaque équipe divisée en 2)"
-                : "Après-midi : Grand terrain, 1 match U11 puis 1 match U13"}
-            </p>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Tournoi de Handball - Admin</h1>
+          <div className="flex gap-2">
+            <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
+            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>
+              🗑️ Vider la base de données
+            </Button>
           </div>
-          <Button onClick={handleLogout} className="bg-gray-400 hover:bg-gray-500">🔒 Déconnexion</Button>
         </div>
-        <div className="flex gap-4 mb-4">
-          <Button onClick={generateAllMatches}>🆕 Générer les matchs</Button>
-          <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={async () => {
-            if (confirm("Vider tous les scores ?")) {
-              await fetch("/api/scores", { method: "DELETE" });
-              await fetchData();
-            }
-          }}>
-            🗑️ Vider la base de données
-          </Button>
-        </div>
-
-        {/* Onglets matin/après-midi */}
-        <Tabs defaultValue="matin" className="w-full" onValueChange={(v) => setActiveTab(v as "matin" | "apresmidi")}>
+        <Tabs defaultValue="U11" className="w-full" onValueChange={(v) => setActiveTab(v as Category)}>
           <TabsList>
-            <TabsTrigger value="matin">Matin</TabsTrigger>
-            <TabsTrigger value="apresmidi">Après-midi</TabsTrigger>
+            <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
+            <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
           </TabsList>
-
-          {/* MATIN */}
-          <TabsContent value="matin">
-            <div className="grid gap-4">
-              {scoresMatin.map((match, idx) => (
-                <Card key={match.id || idx}>
-                  <CardContent className="flex items-center justify-between p-4 gap-4">
-                    {/* Heure & Terrain */}
-                    <span className="w-20 text-xs text-gray-500">{match.heure} | Terrain {match.terrain}</span>
-                    {/* Logo + Equipe 1 */}
-                    <div className="flex items-center gap-2 w-1/4">
-                      <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                      <span>{match.equipe1}</span>
-                    </div>
-                    {/* Score */}
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score1 ?? ""}
-                      onChange={(e) => updateScoreMatin(match.id, "score1", e.target.value)}
-                    />
-                    <span>vs</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      value={match.score2 ?? ""}
-                      onChange={(e) => updateScoreMatin(match.id, "score2", e.target.value)}
-                    />
-                    {/* Logo + Equipe 2 */}
-                    <div className="flex items-center gap-2 w-1/4 justify-end">
-                      <span>{match.equipe2}</span>
-                      <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* APRES-MIDI */}
-          <TabsContent value="apresmidi">
-            <div className="grid gap-4">
-              {scoresAprem.map((match, idx) => (
-                <Card key={match.id || idx}>
-                  <CardContent className="flex items-center justify-between p-4 gap-4">
-                    {/* Heure */}
-                    <span className="w-20 text-xs text-gray-500">{match.heure}</span>
-                    {/* Logo + Equipe 1 */}
-                    <div className="flex items-center gap-2 w-1/4">
-                      <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                      <span>{match.equipe1}</span>
-                    </div>
-                    {/* Scores mi-temps + total */}
-                    <Input
-                      type="number"
-                      className="w-16"
-                      placeholder="MT1"
-                      value={match.miTemps1 ?? ""}
-                      onChange={(e) => updateScoreAprem(match.id, "miTemps1", e.target.value)}
-                    />
-                    <span className="font-bold">/</span>
-                    <Input
-                      type="number"
-                      className="w-16"
-                      placeholder="MT2"
-                      value={match.miTemps2 ?? ""}
-                      onChange={(e) => updateScoreAprem(match.id, "miTemps2", e.target.value)}
-                    />
-                    <span>=</span>
-                    <span className="w-12 font-bold text-lg">
-                      {(match.miTemps1 ?? 0) + (match.miTemps2 ?? 0)}
-                    </span>
-                    {/* Logo + Equipe 2 */}
-                    <div className="flex items-center gap-2 w-1/4 justify-end">
-                      <span>{match.equipe2}</span>
-                      <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+          {(["U11", "U13"] as Category[]).map((category) => (
+            <TabsContent key={category} value={category}>
+              {/* CLASSEMENT phase de poule (matin) */}
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold mb-2">Classement (poule du matin)</h2>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Équipe</th>
+                      <th>Pts</th>
+                      <th>J</th>
+                      <th>Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {calculateRanking(scores[category], category).map(([team, stats]) => (
+                      <tr key={team} className="border-t">
+                        <td className="flex items-center gap-2">
+                          <img src={getLogoSrc(team)} alt={team} className="w-6 h-6 object-contain" />
+                          <span>{team}</span>
+                        </td>
+                        <td className="text-center">{stats.pts}</td>
+                        <td className="text-center">{stats.played}</td>
+                        <td className="text-center">{stats.goalsDiff}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* LISTE DES MATCHS */}
+              <div className="grid gap-4">
+                {scores[category]
+                  .sort((a, b) => (a.phase === "matin" && b.phase !== "matin" ? -1 : 1)) // Matin d'abord, puis après-midi
+                  .map((match, idx) => (
+                  <Card key={match.id ?? idx}>
+                    <CardContent className="flex items-center justify-between p-4 gap-4">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500">
+                          🕒 {match.heure} {match.phase === "matin" ? `(Terrain ${match.terrain})` : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                        <span>{match.equipe1}</span>
+                      </div>
+                      <Input
+                        type="number"
+                        className="w-16"
+                        value={match.score1 ?? ""}
+                        onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                      />
+                      <span>vs</span>
+                      <Input
+                        type="number"
+                        className="w-16"
+                        value={match.score2 ?? ""}
+                        onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                      />
+                      <div className="flex items-center gap-2">
+                        <span>{match.equipe2}</span>
+                        <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
     </div>
