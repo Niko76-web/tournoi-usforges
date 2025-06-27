@@ -192,7 +192,7 @@ export default function AdminPage() {
         {/* Entête avec logo club */}
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold">Résultats en direct</h1>
+            <h1 className="text-2xl font-bold">Interface de saisie des scores</h1>
             <p className="mt-2 text-lg">
               Bienvenue au premier tournoi de l&#39;US Forges-les-Eaux !!!
             </p>
