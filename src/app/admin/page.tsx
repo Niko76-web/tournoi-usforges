@@ -1,48 +1,80 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-// Equipes du matin (poule)
-const U11_MATIN = ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"];
-const U13_MATIN = ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"];
-const matinTeams: { [key: string]: string[] } = { U11: U11_MATIN, U13: U13_MATIN };
-
-type Category = "U11" | "U13";
+// Équipes matin (divisées en 2 pour Hand à 4)
+const matinTeams = {
+  U11: ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"],
+  U13: ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"],
+};
+// Équipes après-midi (équipe complète)
+const apresTeams = {
+  U11: ["Forges", "Foucarmont"],
+  U13: ["Forges", "Gournay"],
+};
+type Category = keyof typeof matinTeams;
 type Phase = "matin" | "apresmidi";
 
-interface Match {
+type Match = {
   id?: number;
   categorie: Category;
   equipe1: string;
   equipe2: string;
   phase: Phase;
-  terrain?: number;
   heure?: string;
   score1?: number | null;
   score2?: number | null;
+};
+
+function getLogoSrc(teamName: string) {
+  // "Forges", "Foucarmont", "Gournay" --> "forges.png", etc.
+  const club = teamName.replace(/[12]/g, "").trim().toLowerCase();
+  return `/logos/${club}.png`;
 }
 
-export default function TournamentAdmin() {
+function generateHorairesMatin(nbMatchs: number): string[] {
+  // Premier match 10h00, 6 minutes de match, 4 minutes de pause.
+  const horaires: string[] = [];
+  let h = 10, m = 0;
+  for (let i = 0; i < nbMatchs; i++) {
+    horaires.push(`${h.toString().padStart(2, "0")}h${m.toString().padStart(2, "0")}`);
+    m += 10; // 6 + 4 = 10 min
+    if (m >= 60) {
+      h += 1;
+      m -= 60;
+    }
+  }
+  return horaires;
+}
+
+export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Category>("U11");
   const [scores, setScores] = useState<{ [key in Category]: Match[] }>({ U11: [], U13: [] });
+  const router = useRouter();
 
-  // Récupère tous les matchs
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("isAdmin") !== "true") {
+      router.push("/login");
+    }
+  }, []);
+
   const fetchData = async () => {
     try {
       const res = await fetch("/api/scores");
       if (!res.ok) return;
-      const data: Match[] = await res.json();
+      const data = await res.json();
       const byCat: { [key in Category]: Match[] } = { U11: [], U13: [] };
-      data.forEach((m) => {
-        byCat[m.categorie].push(m);
+      data.forEach((match: Match) => {
+        byCat[match.categorie].push(match);
       });
       setScores(byCat);
     } catch (error) {
-      console.error("Erreur fetch:", error);
+      console.error("Erreur chargement :", error);
     }
   };
 
@@ -50,183 +82,148 @@ export default function TournamentAdmin() {
     fetchData();
   }, []);
 
-  // À placer dans ton composant admin/page.tsx
+  const handleLogout = () => {
+    localStorage.removeItem("isAdmin");
+    window.location.href = "/login";
+  };
 
-const matinTeams: Record<Category, string[]> = {
-  U11: ["Forges 1", "Forges 2", "Foucarmont 1", "Foucarmont 2"],
-  U13: ["Forges 1", "Forges 2", "Gournay 1", "Gournay 2"],
-};
-
-// Génère tous les matchs selon la configuration
-const generateMatches = async () => {
-  // 1. Matches du matin (poule sur 2 terrains, horaires à partir de 10h00)
-  let matinStart = new Date();
-  matinStart.setHours(10, 0, 0, 0);
-  let allMatches: any[] = [];
-
-  // Pour chaque catégorie (U11/U13)
-  (["U11", "U13"] as Category[]).forEach((cat) => {
-    const teams = matinTeams[cat];
-    let roundMatches: any[] = [];
-    // Round Robin (toutes les rencontres possibles)
-    for (let i = 0; i < teams.length; i++) {
-      for (let j = i + 1; j < teams.length; j++) {
-        roundMatches.push({
-          categorie: cat,
-          equipe1: teams[i],
-          equipe2: teams[j],
-          phase: "matin",
-          score1: null,
-          score2: null,
-        });
+  // Génére tous les matchs selon la config (matin + après-midi)
+  const generateMatches = async () => {
+    let allMatches: Match[] = [];
+    // Matin : round robin 4 équipes -> 6 matchs par catégorie
+    (["U11", "U13"] as Category[]).forEach((cat) => {
+      const teams = matinTeams[cat];
+      const roundMatches: Match[] = [];
+      for (let i = 0; i < teams.length; i++) {
+        for (let j = i + 1; j < teams.length; j++) {
+          roundMatches.push({
+            categorie: cat,
+            equipe1: teams[i],
+            equipe2: teams[j],
+            phase: "matin",
+          });
+        }
       }
+      // Attribution des horaires identiques pour les 2 catégories (matchs en parallèle)
+      const horaires = generateHorairesMatin(roundMatches.length);
+      roundMatches.forEach((m, idx) => { m.heure = horaires[idx]; });
+      allMatches.push(...roundMatches);
+    });
+    // Après-midi : 1 match U11, 1 match U13
+    allMatches.push({
+      categorie: "U11",
+      equipe1: "Forges",
+      equipe2: "Foucarmont",
+      phase: "apresmidi",
+      heure: "14h00",
+    });
+    allMatches.push({
+      categorie: "U13",
+      equipe1: "Forges",
+      equipe2: "Gournay",
+      phase: "apresmidi",
+      heure: "15h00",
+    });
+    // Vide la base
+    await fetch("/api/scores", { method: "DELETE" });
+    // Enregistre tous les matchs
+    for (const match of allMatches) {
+      await fetch("/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(match),
+      });
     }
-    // Attribution horaires/terrains (2 terrains en parallèle)
-    let slotTime = new Date(matinStart);
-    for (let k = 0; k < roundMatches.length; k++) {
-      // terrain alterné 1/2, 2 matchs en parallèle = même horaire
-      const terrain = k % 2 === 0 ? 1 : 2;
-      roundMatches[k].terrain = terrain;
-      roundMatches[k].heure = `${slotTime.getHours().toString().padStart(2, "0")}h${slotTime.getMinutes().toString().padStart(2, "0")}`;
-      if (terrain === 2) {
-        // Après les 2 terrains, avance l'heure pour la prochaine paire
-        slotTime.setMinutes(slotTime.getMinutes() + 6 + 4); // 6 min match + 4 min pause
-      }
-    }
-    allMatches.push(...roundMatches);
-  });
+    alert("Les matchs ont été générés !");
+    await fetchData();
+  };
 
-  // 2. Après-midi : Un seul match U11 puis U13 sur grand terrain
-  allMatches.push({
-    categorie: "U11",
-    equipe1: "Forges",
-    equipe2: "Foucarmont",
-    phase: "apresmidi",
-    terrain: 1,
-    heure: "14h00",
-    score1: null,
-    score2: null,
-  });
-  allMatches.push({
-    categorie: "U13",
-    equipe1: "Forges",
-    equipe2: "Gournay",
-    phase: "apresmidi",
-    terrain: 1,
-    heure: "15h00",
-    score1: null,
-    score2: null,
-  });
+  const clearDatabase = async () => {
+    const confirmation = confirm("Voulez-vous vraiment supprimer tous les matchs ? Cette action est irréversible.");
+    if (!confirmation) return;
+    await fetch("/api/scores", { method: "DELETE" });
+    alert("Base vidée.");
+    await fetchData();
+  };
 
-  // Vide la base d'abord pour éviter doublons
-  await fetch("/api/scores", { method: "DELETE" });
+  const updateScore = async (category: Category, index: number, team: "score1" | "score2", value: string) => {
+    const updated = [...scores[category]];
+    updated[index][team] = value === "" ? null : parseInt(value, 10);
+    setScores({ ...scores, [category]: updated });
 
-  // Enregistre tous les matchs
-  for (const match of allMatches) {
+    const match = updated[index];
     await fetch("/api/scores", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(match),
     });
-  }
-  alert("Les matchs ont été générés avec horaires et terrains !");
-  await fetchData();
-};
-
-
-  // Update d'un score
-  const updateScore = async (category: Category, matchId: number, team: "score1" | "score2", value: string) => {
-    const updatedMatches = scores[category].map((m) =>
-    m.id === matchId ? { ...m, [team]: parseInt(value, 10) } : m
-  );
-  setScores({ ...scores, [category]: updatedMatches });
-
-  const match = updatedMatches.find((m) => m.id === matchId);
-  if (!match) return;
-
-  await fetch("/api/scores", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(match),
-    });
   };
 
-  // Supprime tous les matchs
-  const clearDatabase = async () => {
-    if (!confirm("Supprimer tous les matchs ?")) return;
-    await fetch("/api/scores", { method: "DELETE" });
-    alert("La base de données a été vidée.");
-    await fetchData();
-  };
-
-  // Calcul du classement (matin uniquement, phase de poule)
+  // Calcul classement (matin seulement)
   const calculateRanking = (matches: Match[], category: Category) => {
-    // Ne prend que les matchs du matin
-    const poule = matches.filter((m) => m.phase === "matin");
-    // Toutes les équipes du matin
-    const equipes = matinTeams[category];
     const points: { [team: string]: { pts: number; played: number; goalsDiff: number } } = {};
-    equipes.forEach((team) => {
+    matinTeams[category].forEach((team) => {
       points[team] = { pts: 0, played: 0, goalsDiff: 0 };
     });
-
-    poule.forEach((match) => {
+    matches.filter((m) => m.phase === "matin").forEach((match) => {
       if (match.score1 == null || match.score2 == null) return;
       const { equipe1, equipe2, score1, score2 } = match;
       points[equipe1].played++;
       points[equipe2].played++;
       points[equipe1].goalsDiff += score1 - score2;
       points[equipe2].goalsDiff += score2 - score1;
-
       if (score1 > score2) {
         points[equipe1].pts += 3;
-        points[equipe2].pts += 1;
       } else if (score1 < score2) {
-        points[equipe1].pts += 1;
         points[equipe2].pts += 3;
       } else {
-        points[equipe1].pts += 2;
-        points[equipe2].pts += 2;
+        points[equipe1].pts += 1;
+        points[equipe2].pts += 1;
       }
     });
-
-    return Object.entries(points).sort((a, b) => {
-      if (b[1].pts !== a[1].pts) return b[1].pts - a[1].pts;
-      return b[1].goalsDiff - a[1].goalsDiff;
-    });
-  };
-
-  // Affichage logo équipe (si tu veux)
-  const getLogoSrc = (teamName: string) => {
-    // "Forges 1" -> "forges.png" (logo principal du club)
-    // Si tu veux différencier les 1/2, ajoute une condition ici
-    const parts = teamName.split(" ");
-    const club = parts[0].toLowerCase();
-    return `/logos/${club}.png`;
+    return Object.entries(points).sort((a, b) =>
+      b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : b[1].goalsDiff - a[1].goalsDiff
+    );
   };
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${activeTab === "U11" ? "bg-blue-100" : "bg-green-100"}`}>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Tournoi de Handball - Admin</h1>
-          <div className="flex gap-2">
-            <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
-            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>
-              🗑️ Vider la base de données
-            </Button>
+      <div className="max-w-4xl mx-auto px-2 sm:px-6 py-8">
+        {/* Entête avec logo club */}
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Résultats en direct</h1>
+            <p className="mt-2 text-lg">
+              Bienvenue au premier tournoi de l&#39;US Forges-les-Eaux !!!
+            </p>
           </div>
+          <img
+            src="/logos/forges.png"
+            alt="Logo US Forges"
+            className="w-24 h-auto sm:w-32 object-contain ml-2"
+            style={{ maxHeight: "96px" }}
+          />
         </div>
-        <Tabs defaultValue="U11" className="w-full" onValueChange={(v) => setActiveTab(v as Category)}>
+
+        {/* Boutons admin */}
+        <div className="flex gap-4 mb-4">
+          <Button onClick={generateMatches}>🆕 Générer les matchs</Button>
+          <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={clearDatabase}>🗑️ Vider la base</Button>
+          <Button className="bg-gray-400 hover:bg-gray-500" onClick={handleLogout}>🔒 Déconnexion</Button>
+        </div>
+
+        {/* Tabs : renommés */}
+        <Tabs defaultValue="U11" className="w-full" onValueChange={(val) => setActiveTab(val as Category)}>
           <TabsList>
-            <TabsTrigger value="U11">Catégorie U11</TabsTrigger>
-            <TabsTrigger value="U13">Catégorie U13</TabsTrigger>
+            <TabsTrigger value="U11">Terrain 1 - U11</TabsTrigger>
+            <TabsTrigger value="U13">Terrain 2 - U13</TabsTrigger>
           </TabsList>
-          {(["U11", "U13"] as Category[]).map((category) => (
+
+          {(Object.keys(matinTeams) as Category[]).map((category) => (
             <TabsContent key={category} value={category}>
-              {/* CLASSEMENT phase de poule (matin) */}
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">Classement (poule du matin)</h2>
+              {/* Classement matin */}
+              <div className="mb-4 mt-4">
+                <h2 className="text-lg font-semibold mb-2">Classement du matin</h2>
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
@@ -251,88 +248,90 @@ const generateMatches = async () => {
                   </tbody>
                 </table>
               </div>
-              {/* LISTE DES MATCHS */}
-              {/* MATCHS DU MATIN */}
-                <h3 className="text-lg font-semibold text-blue-700 mb-2 mt-4">Matin - Hand à 4</h3>
-                <div className="grid gap-4 mb-6">
-                  {scores[category]
-                    .filter((match) => match.phase === "matin")
-                    .sort((a, b) => (a.heure || "").localeCompare(b.heure || ""))
-                    .map((match, idx) => (
-                      <Card key={match.id ?? idx}>
-                        <CardContent className="flex items-center justify-between p-4 gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-gray-500">
-                              🕒 {match.heure} {match.phase === "matin" ? `(Terrain ${match.terrain})` : ""}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                            <span>{match.equipe1}</span>
-                          </div>
-                          <Input
-                            type="number"
-                            className="w-16"
-                            value={match.score1 ?? ""}
-                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score1", e.target.value)}
-                          />
-                          <span>vs</span>
-                          <Input
-                            type="number"
-                            className="w-16"
-                            value={match.score2 ?? ""}
-                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score2", e.target.value)}
-                          />
-                          <div className="flex items-center gap-2">
-                            <span>{match.equipe2}</span>
-                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
 
-                {/* SÉPARATEUR */}
-                <div className="text-center text-xl font-bold text-green-700 mb-2 mt-8 border-t-2 border-green-200 pt-4">
-                  Match amical équipe complète
-                </div>
-
-                {/* MATCHS DE L’APRÈS-MIDI */}
+              {/* Liste des matchs, séparé matin/après-midi */}
+              <div>
+                <h3 className="text-md font-semibold mt-6 mb-2">Matchs du matin</h3>
                 <div className="grid gap-4">
                   {scores[category]
-                    .filter((match) => match.phase === "apresmidi")
-                    .sort((a, b) => (a.heure || "").localeCompare(b.heure || ""))
+                    .filter((m) => m.phase === "matin")
+                    .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""))
                     .map((match, idx) => (
                       <Card key={match.id ?? idx}>
-                        <CardContent className="flex items-center justify-between p-4 gap-4">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-gray-500">🕒 {match.heure}</span>
+                        <CardContent className="flex flex-wrap md:flex-nowrap items-center justify-between p-4 gap-2">
+                          <div className="flex flex-col min-w-[72px]">
+                            <span className="text-xs text-gray-500">
+                              🕒 {match.heure}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
-                            <span>{match.equipe1}</span>
+                            <span className="truncate max-w-[90px] sm:max-w-[160px]">{match.equipe1}</span>
                           </div>
                           <Input
                             type="number"
-                            className="w-16"
+                            className="w-14 sm:w-16"
                             value={match.score1 ?? ""}
-                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score1", e.target.value)}
+                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
                           />
                           <span>vs</span>
                           <Input
                             type="number"
-                            className="w-16"
+                            className="w-14 sm:w-16"
                             value={match.score2 ?? ""}
-                            onChange={(e) => match.id !== undefined && updateScore(category, match.id, "score2", e.target.value)}
+                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
                           />
-                          <div className="flex items-center gap-2">
-                            <span>{match.equipe2}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="truncate max-w-[90px] sm:max-w-[160px]">{match.equipe2}</span>
                             <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                 </div>
+
+                {/* Séparateur amical */}
+                <div className="text-center my-6 font-bold text-base">Match amical équipe complète</div>
+                
+                {/* Matchs après-midi */}
+                <div className="grid gap-4">
+                  {scores[category]
+                    .filter((m) => m.phase === "apresmidi")
+                    .sort((a, b) => (a.heure ?? "").localeCompare(b.heure ?? ""))
+                    .map((match, idx) => (
+                      <Card key={match.id ?? idx}>
+                        <CardContent className="flex flex-wrap md:flex-nowrap items-center justify-between p-4 gap-2">
+                          <div className="flex flex-col min-w-[72px]">
+                            <span className="text-xs text-gray-500">
+                              🕒 {match.heure}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <img src={getLogoSrc(match.equipe1)} alt={match.equipe1} className="w-8 h-8 object-contain" />
+                            <span className="truncate max-w-[90px] sm:max-w-[160px]">{match.equipe1}</span>
+                          </div>
+                          <Input
+                            type="number"
+                            className="w-14 sm:w-16"
+                            value={match.score1 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
+                          />
+                          <span>vs</span>
+                          <Input
+                            type="number"
+                            className="w-14 sm:w-16"
+                            value={match.score2 ?? ""}
+                            onChange={(e) => updateScore(category, idx, "score2", e.target.value)}
+                          />
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="truncate max-w-[90px] sm:max-w-[160px]">{match.equipe2}</span>
+                            <img src={getLogoSrc(match.equipe2)} alt={match.equipe2} className="w-8 h-8 object-contain" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
             </TabsContent>
           ))}
         </Tabs>
