@@ -274,7 +274,7 @@ export default function AdminPage() {
                             value={match.score1 ?? ""}
                             onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
                           />
-                          <span>vs</span>
+                          <span>-</span>
                           <Input
                             type="number"
                             className="w-14 sm:w-16"
@@ -316,7 +316,7 @@ export default function AdminPage() {
                             value={match.score1 ?? ""}
                             onChange={(e) => updateScore(category, idx, "score1", e.target.value)}
                           />
-                          <span>vs</span>
+                          <span>-</span>
                           <Input
                             type="number"
                             className="w-14 sm:w-16"
