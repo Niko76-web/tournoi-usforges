@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Équipes matin (divisées en 2 pour Hand à 4)
 const matinTeams = {
-  U11: ["Forges 1", "Foucarmont 1", "Forges 2", "Foucarmont 2"],
+  U11: ["Forges 1", "Foucarmont 1", "Forges 2", "Forges 3"],
   U13: ["Forges 1", "Gournay 1", "Forges 2", "Gournay 2"],
 };
 // Équipes après-midi (équipe complète)
